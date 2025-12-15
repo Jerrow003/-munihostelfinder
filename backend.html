@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muni Hostel Finder - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="backend.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.png" alt="Muni Hostel Finder Logo">
+            <h2>Admin Panel</h2>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="#"><i class="fas fa-bed"></i> <span>Hostels</span></a></li>
+                <li><a href="#"><i class="fas fa-users"></i> <span>Users</span></a></li>
+                <li><a href="#"><i class="fas fa-calendar-check"></i> <span>Bookings</span></a></li>
+                <li><a href="#"><i class="fas fa-map-marker-alt"></i> <span>Locations</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="index.html"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <div class="user-avatar">AD</div>
+                <div>
+                    <div>Admin User</div>
+                    <small>Administrator</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon hostels">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>24</h3>
+                    <p>Total Hostels</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>156</h3>
+                    <p>Registered Users</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bookings">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>42</h3>
+                    <p>Active Bookings</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon revenue">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>UGX 8.4M</h3>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Hostels Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Recent Hostels</h2>
+                <button class="btn btn-primary" id="addHostelBtn">
+                    <i class="fas fa-plus"></i> Add New Hostel
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="hostelsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Price</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hostelsTableBody">
+                        <!-- Hostels will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Bookings Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Recent Bookings</h2>
+                <button class="btn btn-secondary" id="exportBtn">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="bookingsTable">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Hostel</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsTableBody">
+                        <!-- Bookings will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Hostel Modal -->
+    <div class="modal" id="addHostelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Hostel</h3>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="hostelForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hostelName">Hostel Name</label>
+                            <input type="text" id="hostelName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hostelPrice">Price (UGX)</label>
+                            <input type="text" id="hostelPrice" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hostelLocation">Location</label>
+                            <input type="text" id="hostelLocation" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hostelCapacity">Capacity</label>
+                            <input type="number" id="hostelCapacity" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hostelAddress">Address</label>
+                        <input type="text" id="hostelAddress" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hostelPhone">Phone</label>
+                        <input type="text" id="hostelPhone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hostelEmail">Email</label>
+                        <input type="email" id="hostelEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hostelDescription">Description</label>
+                        <textarea id="hostelDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Features</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="featureWifi" checked>
+                                <label for="featureWifi">WiFi</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="featureWater" checked>
+                                <label for="featureWater">Water</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="featureElectricity" checked>
+                                <label for="featureElectricity">Electricity</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="featureSecurity" checked>
+                                <label for="featureSecurity">Security</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hostelImage">Image URL</label>
+                        <input type="text" id="hostelImage" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveHostelBtn">Save Hostel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="backend.js"></script>
+</body>
+</html>
