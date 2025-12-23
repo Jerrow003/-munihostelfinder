@@ -1,4 +1,4 @@
-// Sample hostel data
+// Sample hostel data (contact info is included but will be hidden)
 const hostels = [
     {
         id: 1,
@@ -71,49 +71,32 @@ const hostels = [
             security: true
         },
         image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80"
-    },
-    {
-        id: 5,
-        name: "Arua Comfort Hostel",
-        price: "180,000",
-        location: "4.2 km from Campus",
-        address: "Plot 89, Arua Town Road",
-        phone: "+256 762 111 222",
-        email: "arua@comforthostel.com",
-        capacity: 150,
-        description: "Budget-friendly option with basic amenities. Great for students looking to save on accommodation costs.",
-        features: {
-            wifi: false,
-            water: true,
-            electricity: true,
-            security: true
-        },
-        image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2080&q=80"
-    },
-    {
-        id: 6,
-        name: "University Gardens",
-        price: "280,000",
-        location: "1.5 km from Campus",
-        address: "Plot 34, Garden Avenue",
-        phone: "+256 782 333 444",
-        email: "info@universitygardens.com",
-        capacity: 90,
-        description: "Beautiful hostel with garden views and peaceful environment. Ideal for students who appreciate nature.",
-        features: {
-            wifi: true,
-            water: true,
-            electricity: true,
-            security: true
-        },
-        image: "https://images.unsplash.com/photo-1571624436279-b272aff752b5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80"
     }
 ];
 
-// Function to display hostels
+// Check if user is logged in
+function isUserLoggedIn() {
+    const currentUser = sessionStorage.getItem('currentUser');
+    return currentUser !== null;
+}
+
+// Function to display hostels (contact info hidden for non-logged users)
 function displayHostels() {
     const container = document.getElementById('hostels-container');
     container.innerHTML = '';
+
+    const loggedIn = isUserLoggedIn();
+    
+    // Update auth link text
+    const authLink = document.getElementById('authLink');
+    if (loggedIn) {
+        const user = JSON.parse(sessionStorage.getItem('currentUser'));
+        authLink.innerHTML = `<i class="fas fa-user"></i> ${user.firstName}`;
+        authLink.href = "#";
+    } else {
+        authLink.innerHTML = '<i class="fas fa-user"></i> Login';
+        authLink.href = "index.html";
+    }
 
     hostels.forEach(hostel => {
         const card = document.createElement('div');
@@ -147,10 +130,10 @@ function displayHostels() {
                 </div>
                 <div class="hostel-price">UGX ${hostel.price}/month</div>
                 <div class="hostel-actions">
-                    <button class="btn btn-primary" onclick="viewHostelDetails(${hostel.id})">
+                    <button class="btn btn-primary view-details-btn" data-id="${hostel.id}">
                         <i class="fas fa-eye"></i> View Details
                     </button>
-                    <button class="btn btn-secondary" onclick="getDirections('${hostel.address}')">
+                    <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}">
                         <i class="fas fa-map-marked-alt"></i> Map
                     </button>
                 </div>
@@ -159,56 +142,128 @@ function displayHostels() {
         
         container.appendChild(card);
     });
+
+    // Add event listeners to the new buttons
+    document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const hostelId = parseInt(this.getAttribute('data-id'));
+            viewHostelDetails(hostelId);
+        });
+    });
+
+    document.querySelectorAll('.get-directions-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const address = this.getAttribute('data-address');
+            getDirections(address);
+        });
+    });
 }
 
-// Function to view hostel details
+// Function to view hostel details with registration check
 function viewHostelDetails(id) {
     const hostel = hostels.find(h => h.id === id);
-    if (hostel) {
-        const featuresList = Object.entries(hostel.features)
-            .map(([feature, available]) => 
-                `<li>${available ? '✓' : '✗'} ${feature.charAt(0).toUpperCase() + feature.slice(1)}</li>`
-            )
-            .join('');
-            
-        alert(`Hostel Details:\n\nName: ${hostel.name}\nPrice: UGX ${hostel.price}/month\nLocation: ${hostel.location}\nAddress: ${hostel.address}\nPhone: ${hostel.phone}\nEmail: ${hostel.email}\nCapacity: ${hostel.capacity} students\n\nDescription: ${hostel.description}\n\nFeatures:\n${featuresList}`);
+    const loggedIn = isUserLoggedIn();
+    
+    if (!hostel) return;
+
+    const featuresList = Object.entries(hostel.features)
+        .map(([feature, available]) => 
+            `<li>${available ? '✓' : '✗'} ${feature.charAt(0).toUpperCase() + feature.slice(1)}</li>`
+        )
+        .join('');
+
+    let contactSection = '';
+    
+    if (loggedIn) {
+        // Show contact info if logged in
+        contactSection = `
+            <div class="contact-info">
+                <h4>Contact Information</h4>
+                <p><strong>Address:</strong> ${hostel.address}</p>
+                <p><strong>Phone:</strong> ${hostel.phone}</p>
+                <p><strong>Email:</strong> ${hostel.email}</p>
+            </div>
+            <button class="btn btn-primary" onclick="bookHostel(${hostel.id})">
+                <i class="fas fa-calendar-check"></i> Book Now
+            </button>
+        `;
+    } else {
+        // Show registration prompt if not logged in
+        contactSection = `
+            <div class="login-prompt">
+                <p><strong>Registration Required</strong></p>
+                <p>Register and login to view contact details and make bookings</p>
+                <button class="btn btn-primary" onclick="showRegistrationPrompt()">
+                    <i class="fas fa-user-plus"></i> Register Now
+                </button>
+            </div>
+        `;
+    }
+
+    // Create modal for hostel details
+    const modal = document.createElement('div');
+    modal.className = 'modal hostel-detail-modal';
+    modal.id = 'hostelDetailModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>${hostel.name}</h3>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img src="${hostel.image}" alt="${hostel.name}" class="hostel-img">
+                <p><strong>Location:</strong> ${hostel.location}</p>
+                <p><strong>Price:</strong> UGX ${hostel.price}/month</p>
+                <p><strong>Capacity:</strong> ${hostel.capacity} students</p>
+                <p><strong>Description:</strong> ${hostel.description}</p>
+                <h4>Features:</h4>
+                <ul>${featuresList}</ul>
+                ${contactSection}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Close button functionality
+    modal.querySelector('.close').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Close when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Function to show registration prompt
+function showRegistrationPrompt() {
+    const registrationModal = document.getElementById('registrationModal');
+    registrationModal.style.display = 'flex';
+}
+
+// Function to book hostel (for logged in users)
+function bookHostel(id) {
+    const hostel = hostels.find(h => h.id === id);
+    if (hostel && isUserLoggedIn()) {
+        alert(`Booking initiated for ${hostel.name}\n\nA booking form would open here for registered users.`);
     }
 }
 
 // Function to get directions (simulated)
 function getDirections(address) {
     alert(`Opening Google Maps with directions to:\n\n${address}\n\nThis would open Google Maps in a real application.`);
-    // In a real application, this would open Google Maps with the address
-    // window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`);
-}
-
-// Initialize map (simulated)
-function initMap() {
-    // In a real application, this would initialize Google Maps
-    const mapElement = document.getElementById('map');
-    mapElement.innerHTML = `
-        <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#e9ecef; color:#6c757d;">
-            <div style="text-align:center;">
-                <i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:1rem;"></i>
-                <p>Interactive map showing hostel locations around Muni University</p>
-                <p>In a real application, this would display Google Maps with markers for each hostel</p>
-                <button class="btn btn-primary" style="margin-top:1rem;" onclick="showAllHostelsOnMap()">
-                    <i class="fas fa-map"></i> View All Hostels on Map
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// Function to show all hostels on map (simulated)
-function showAllHostelsOnMap() {
-    alert("This would display all hostel locations on an interactive Google Map in a real application.\n\nHostels would be shown as markers with popup information.");
 }
 
 // Initialize search functionality
 function setupSearch() {
-    const searchInput = document.querySelector('.search-box input');
-    const searchButton = document.querySelector('.search-box button');
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchBtn');
     
     const performSearch = () => {
         const searchTerm = searchInput.value.toLowerCase().trim();
@@ -271,10 +326,10 @@ function setupSearch() {
                     </div>
                     <div class="hostel-price">UGX ${hostel.price}/month</div>
                     <div class="hostel-actions">
-                        <button class="btn btn-primary" onclick="viewHostelDetails(${hostel.id})">
+                        <button class="btn btn-primary view-details-btn" data-id="${hostel.id}">
                             <i class="fas fa-eye"></i> View Details
                         </button>
-                        <button class="btn btn-secondary" onclick="getDirections('${hostel.address}')">
+                        <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}">
                             <i class="fas fa-map-marked-alt"></i> Map
                         </button>
                     </div>
@@ -282,6 +337,21 @@ function setupSearch() {
             `;
             
             container.appendChild(card);
+        });
+
+        // Re-attach event listeners
+        document.querySelectorAll('.view-details-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const hostelId = parseInt(this.getAttribute('data-id'));
+                viewHostelDetails(hostelId);
+            });
+        });
+
+        document.querySelectorAll('.get-directions-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const address = this.getAttribute('data-address');
+                getDirections(address);
+            });
         });
     };
     
@@ -293,20 +363,49 @@ function setupSearch() {
     });
 }
 
+// Initialize registration modal functionality
+function setupRegistrationModal() {
+    const registrationModal = document.getElementById('registrationModal');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const registerNowBtn = document.getElementById('registerNowBtn');
+    const closeModalBtn = registrationModal.querySelector('.close');
+
+    // Close modal buttons
+    cancelModalBtn.addEventListener('click', () => {
+        registrationModal.style.display = 'none';
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        registrationModal.style.display = 'none';
+    });
+
+    // Register now button
+    registerNowBtn.addEventListener('click', () => {
+        registrationModal.style.display = 'none';
+        window.location.href = 'signup.html';
+    });
+
+    // Close when clicking outside
+    registrationModal.addEventListener('click', (e) => {
+        if (e.target === registrationModal) {
+            registrationModal.style.display = 'none';
+        }
+    });
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     displayHostels();
     initMap();
     setupSearch();
+    setupRegistrationModal();
     
-    // Smooth scrolling for navigation links (excluding logout link)
-    document.querySelectorAll('nav a').forEach(anchor => {
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const targetId = this.getAttribute('href');
             
-            // Check if it's a hash link (internal section navigation)
-            // Only prevent default for internal section links
-            if (targetId.startsWith('#')) {
+            if (targetId !== '#') {
                 e.preventDefault();
                 const targetElement = document.querySelector(targetId);
                 
@@ -317,7 +416,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             }
-            // If it's not a hash link (like index.html), allow default behavior
         });
     });
 });
+
+// Initialize map (simulated)
+function initMap() {
+    const mapElement = document.getElementById('map');
+    mapElement.innerHTML = `
+        <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#e9ecef; color:#6c757d;">
+            <div style="text-align:center;">
+                <i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:1rem;"></i>
+                <p>Interactive map showing hostel locations around Muni University</p>
+                <button class="btn btn-primary" style="margin-top:1rem;" onclick="showAllHostelsOnMap()">
+                    <i class="fas fa-map"></i> View All Hostels on Map
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Function to show all hostels on map (simulated)
+function showAllHostelsOnMap() {
+    alert("This would display all hostel locations on an interactive Google Map in a real application.\n\nHostels would be shown as markers with popup information.");
+}
