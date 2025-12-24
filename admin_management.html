@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Muni Hostel Finder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="backend.css">
+    <style>
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .admin-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-title {
+            flex: 1;
+        }
+        
+        .admin-title h3 {
+            margin: 0 0 0.25rem 0;
+            color: var(--primary);
+        }
+        
+        .admin-title small {
+            color: #6c757d;
+        }
+        
+        .admin-role {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .role-super { background: #dc3545; color: white; }
+        .role-hostel { background: #28a745; color: white; }
+        .role-user { background: #6c757d; color: white; }
+        
+        .admin-status {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+        
+        .status-active { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-inactive { background: #f8d7da; color: #721c24; }
+        
+        .admin-info {
+            margin-bottom: 1rem;
+        }
+        
+        .admin-info p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .hostel-assignment {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .hostel-assigned {
+            color: #28a745;
+        }
+        
+        .hostel-unassigned {
+            color: #dc3545;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .admin-actions .btn-sm {
+            padding: 0.3rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        .permissions-list {
+            margin-top: 1rem;
+            padding-left: 1.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .permissions-list li {
+            margin-bottom: 0.3rem;
+            color: #495057;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-box {
+            flex: 1;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .user-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card-small {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .stat-icon-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/logo.png" alt="Muni Hostel Finder Logo">
+            <h2>System Management</h2>
+            <div class="system-status">
+                <span class="status-indicator active"></span>
+                <small>Super Admin Mode</small>
+            </div>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="backend.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="admin-management.html" class="active"><i class="fas fa-users-cog"></i> <span>User Management</span></a></li>
+                <li><a href="security-logs.html"><i class="fas fa-shield-alt"></i> <span>Security Logs</span></a></li>
+                <li><a href="hostel-assignments.html"><i class="fas fa-bed"></i> <span>Hostel Assignments</span></a></li>
+                <li><a href="system-audit.html"><i class="fas fa-clipboard-check"></i> <span>System Audit</span></a></li>
+                <li class="divider"></li>
+                <li><a href="backend.html"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a></li>
+                <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-info-small">
+                <div class="user-avatar-small" style="background: #dc3545;">SA</div>
+                <div>
+                    <div>Super Admin</div>
+                    <small>System Developer</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>User & Permission Management</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="user-avatar" style="background: #dc3545;">SA</div>
+                    <div>
+                        <div>Super Administrator</div>
+                        <small>System Developer</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Statistics -->
+        <div class="user-stats" id="userStats">
+            <!-- Stats will be loaded by JavaScript -->
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>Manage Users</h2>
+                <div class="section-actions">
+                    <button class="btn btn-primary" id="createUserBtn">
+                        <i class="fas fa-user-plus"></i> Create User
+                    </button>
+                    <button class="btn btn-secondary" id="exportUsersBtn">
+                        <i class="fas fa-download"></i> Export Users
+                    </button>
+                </div>
+            </div>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchUsers" class="form-control" placeholder="Search users by name, email, or role...">
+                </div>
+                <div class="filter-group">
+                    <label>Filter by:</label>
+                    <select id="filterRole" class="form-control" style="width: 150px;">
+                        <option value="">All Roles</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="hostel_admin">Hostel Admin</option>
+                        <option value="user">Student</option>
+                    </select>
+                    <select id="filterStatus" class="form-control" style="width: 150px;">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="admin-grid" id="usersContainer">
+                <!-- Users will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>System Actions</h2>
+            </div>
+            <div class="quick-actions-grid">
+                <a href="security-logs.html" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Security Logs</h3>
+                    <p>View all security events and logs</p>
+                </a>
+                
+                <a href="system-backup.html" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3>System Backup</h3>
+                    <p>Backup and restore system data</p>
+                </a>
+                
+                <a href="bulk-operations.html" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: rgba(0, 123, 255, 0.1); color: #007bff;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>Bulk Operations</h3>
+                    <p>Perform bulk actions on users</p>
+                </a>
+                
+                <a href="system-config.html" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3>System Config</h3>
+                    <p>Configure system settings</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay"></div>
+
+    <!-- Create User Modal -->
+    <div class="modal" id="createUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New User</h3>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createFirstName">First Name *</label>
+                            <input type="text" id="createFirstName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createLastName">Last Name *</label>
+                            <input type="text" id="createLastName" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="createEmail">Email Address *</label>
+                        <input type="email" id="createEmail" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="createPhone">Phone Number *</label>
+                        <input type="tel" id="createPhone" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createRole">Role *</label>
+                            <select id="createRole" class="form-control" required>
+                                <option value="">Select Role</option>
+                                <option value="user">Student User</option>
+                                <option value="hostel_admin">Hostel Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="createStatus">Status *</label>
+                            <select id="createStatus" class="form-control" required>
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="hostelAssignmentField" style="display: none;">
+                        <label for="assignHostel">Assign Hostel (Optional)</label>
+                        <select id="assignHostel" class="form-control">
+                            <option value="">Select Hostel (Optional)</option>
+                            <!-- Hostels will be loaded dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="createPassword">Temporary Password</label>
+                        <div class="password-container">
+                            <input type="text" id="createPassword" class="form-control" readonly>
+                            <button type="button" class="btn btn-sm btn-secondary" id="generatePassword">
+                                <i class="fas fa-redo"></i> Generate
+                            </button>
+                        </div>
+                        <small class="text-muted">User will be prompted to change password on first login</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sendWelcomeEmail" checked>
+                            <label for="sendWelcomeEmail">Send welcome email with credentials</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCreateBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveUserBtn">Create User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal" id="userDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userDetailsTitle">User Details</h3>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body" id="userDetailsBody">
+                <!-- User details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeDetailsBtn">Close</button>
+                <button class="btn btn-primary" id="editUserBtn">Edit User</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="security.js"></script>
+    <script src=admin-management.js"></script>
+</body>
+</html>
