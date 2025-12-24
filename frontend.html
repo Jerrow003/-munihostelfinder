@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="frontend.css">
 </head>
 <body>
+    <!-- Header -->
     <header>
         <div class="header-container">
             <div class="logo">
@@ -18,13 +19,18 @@
                 <ul>  
                     <li><i class="fas fa-bed"></i>  <a href="#hostels">Find Hostels</a></li>
                     <li><i class="fas fa-map-marker-alt"></i> <a href="#map">Map</a></li>
+                    <li><i class="fas fa-question-circle"></i> <a href="#faq">FAQ</a></li>
                     <li><i class="fas fa-envelope"></i> <a href="#contact">Contact</a></li>
-                    <li><i class="fas fa-user"></i> <a href="index.html" id="authLink">Login</a></li>
+                    <li class="user-menu" id="authNav">
+                        <a href="index.html" id="authLink"><i class="fas fa-user"></i> Login</a>
+                    </li>
                 </ul>
             </nav>
+            <!-- Mobile menu toggle will be added by JavaScript -->
         </div>
     </header>
 
+    <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="hero-content">
             <h2>Find Your Perfect Hostel Near Muni University</h2>
@@ -33,16 +39,27 @@
                 <input type="text" id="searchInput" placeholder="Search for hostels by name, location, or price...">
                 <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
             </div>
+            <div class="hero-actions">
+                <a href="#hostels" class="btn btn-primary">
+                    <i class="fas fa-bed"></i> Browse Hostels
+                </a>
+                <a href="signup.html" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Register Now
+                </a>
+            </div>
         </div>
     </section>
 
+    <!-- Hostels Section -->
     <section class="container" id="hostels">
         <h2 class="section-title">Available Hostels</h2>
+        <p class="section-subtitle">Browse all available hostels. <a href="signup.html">Register</a> to view contact details and make bookings.</p>
         <div class="hostels-grid" id="hostels-container">
             <!-- Hostels will be populated by JavaScript -->
         </div>
     </section>
 
+    <!-- Map Section -->
     <section class="container map-section" id="map">
         <h2 class="section-title">Hostel Locations</h2>
         <div class="map-container">
@@ -50,35 +67,40 @@
         </div>
     </section>
 
-    <!-- Registration Prompt Modal -->
-    <div class="modal" id="registrationModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Registration Required</h3>
-                <button class="close">&times;</button>
+    <!-- FAQ Section -->
+    <section class="container" id="faq">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="faq-container">
+            <div class="faq-item">
+                <h3><i class="fas fa-question-circle"></i> Do I need to register to view hostels?</h3>
+                <p>No, you can browse all hostels without registration. However, you need to register and login to view contact details and make bookings.</p>
             </div>
-            <div class="modal-body">
-                <p>You need to be registered and logged in to view contact details and make bookings.</p>
-                <p>Register now to access:</p>
-                <ul>
-                    <li>Hostel contact information</li>
-                    <li>Booking system</li>
-                    <li>Save favorite hostels</li>
-                    <li>Booking history</li>
-                </ul>
+            <div class="faq-item">
+                <h3><i class="fas fa-question-circle"></i> How do I book a hostel?</h3>
+                <p>Register as a student, login, then click "View Details" on any hostel. You'll see a "Book Now" button if you're logged in.</p>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelModalBtn">Maybe Later</button>
-                <button class="btn btn-primary" id="registerNowBtn">Register Now</button>
+            <div class="faq-item">
+                <h3><i class="fas fa-question-circle"></i> What information do hostel owners see?</h3>
+                <p>Hostel administrators can only see their own hostel information and bookings. They cannot see other hostels or student details.</p>
+            </div>
+            <div class="faq-item">
+                <h3><i class="fas fa-question-circle"></i> How do I become a hostel admin?</h3>
+                <p>Register as a hostel admin, then contact the system administrator to assign you a hostel and activate your account.</p>
             </div>
         </div>
-    </div>
+    </section>
 
+    <!-- Footer -->
     <footer id="contact">
         <div class="footer-content">
             <div class="footer-section">
                 <h3>Muni Hostel Finder</h3>
                 <p>Your trusted platform for finding comfortable and affordable accommodation around Muni University.</p>
+                <div class="quick-links">
+                    <a href="index.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="signup.html"><i class="fas fa-user-plus"></i> Register</a>
+                    <a href="#faq"><i class="fas fa-question-circle"></i> FAQ</a>
+                </div>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
@@ -89,10 +111,11 @@
             <div class="footer-section">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#hostels">Find Hostels</a></li>
-                    <li><a href="#map">Map</a></li>
-                    <li><a href="#contact">Contact Us</a></li>
+                    <li><a href="#home"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#hostels"><i class="fas fa-bed"></i> Find Hostels</a></li>
+                    <li><a href="#map"><i class="fas fa-map-marker-alt"></i> Map</a></li>
+                    <li><a href="#faq"><i class="fas fa-question-circle"></i> FAQ</a></li>
+                    <li><a href="#contact"><i class="fas fa-envelope"></i> Contact Us</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -101,14 +124,73 @@
                     <li><i class="fas fa-map-marker-alt"></i> Muni University, Arua, Uganda</li>
                     <li><i class="fas fa-phone"></i> +256 712 345 678</li>
                     <li><i class="fas fa-envelope"></i> info@munihostelfinder.com</li>
+                    <li><i class="fas fa-user-shield"></i> For hostel admin inquiries</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="terms.html"><i class="fas fa-file-contract"></i> Terms of Service</a></li>
+                    <li><a href="privacy.html"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
+                    <li><a href="cookies.html"><i class="fas fa-cookie-bite"></i> Cookie Policy</a></li>
                 </ul>
             </div>
         </div>
         <div class="copyright">
             <p>&copy; 2025 Muni Hostel Finder. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                <a href="backend.html" style="color: #6c757d;">Admin Portal</a> | 
+                <a href="admin-management.html" style="color: #6c757d;">System Management</a>
+            </p>
         </div>
     </footer>
 
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <button class="close-menu">
+            <i class="fas fa-times"></i>
+        </button>
+        <ul id="mobileNavList">
+            <!-- Mobile nav items will be loaded here -->
+        </ul>
+        <div class="mobile-user-menu" id="mobileUserMenu">
+            <!-- User menu for mobile -->
+        </div>
+    </div>
+
+    <!-- Registration Prompt Modal -->
+    <div class="modal" id="registrationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Registration Required</h3>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>You need to be registered and logged in to view contact details and make bookings.</p>
+                <p>Register now to access:</p>
+                <ul>
+                    <li><i class="fas fa-phone text-success"></i> Hostel contact information</li>
+                    <li><i class="fas fa-calendar-check text-success"></i> Booking system</li>
+                    <li><i class="fas fa-heart text-success"></i> Save favorite hostels</li>
+                    <li><i class="fas fa-history text-success"></i> Booking history</li>
+                    <li><i class="fas fa-bell text-success"></i> Notifications</li>
+                </ul>
+                <div class="modal-actions">
+                    <a href="signup.html" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Register Now
+                    </a>
+                    <a href="index.html" class="btn btn-secondary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <button class="btn btn-outline" id="continueBrowsing">
+                        Continue Browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="security.js"></script>
     <script src="frontend.js"></script>
 </body>
 </html>
