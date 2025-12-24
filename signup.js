@@ -1,4 +1,7 @@
+// signup.js - Complete Registration System
+
 document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
     const userTypeUser = document.getElementById('userTypeUser');
     const userTypeAdmin = document.getElementById('userTypeAdmin');
     const signupForm = document.getElementById('signupForm');
@@ -9,137 +12,143 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentFields = document.getElementById('studentFields');
     const hostelOwnerFields = document.getElementById('hostelOwnerFields');
     
-    // User type selection
-    userTypeUser.addEventListener('click', function() {
-        userTypeUser.classList.add('active');
-        userTypeAdmin.classList.remove('active');
-        studentFields.style.display = 'block';
-        hostelOwnerFields.style.display = 'none';
-    });
+    // Initialize
+    selectUserType('student');
     
-    userTypeAdmin.addEventListener('click', function() {
-        userTypeAdmin.classList.add('active');
-        userTypeUser.classList.remove('active');
-        studentFields.style.display = 'none';
-        hostelOwnerFields.style.display = 'block';
-    });
+    // Event Listeners
+    userTypeUser.addEventListener('click', () => selectUserType('student'));
+    userTypeAdmin.addEventListener('click', () => selectUserType('admin'));
+    togglePassword.addEventListener('click', () => togglePasswordVisibility('password'));
+    toggleConfirmPassword.addEventListener('click', () => togglePasswordVisibility('confirmPassword'));
+    signupForm.addEventListener('submit', handleSignup);
     
-    // Toggle password visibility
-    togglePassword.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        
-        // Toggle eye icon
-        if (type === 'password') {
-            togglePassword.innerHTML = '<i class="fas fa-eye"></i>';
+    // Real-time validation
+    passwordInput.addEventListener('input', validatePassword);
+    confirmPasswordInput.addEventListener('input', validateConfirmPassword);
+    
+    function selectUserType(type) {
+        if (type === 'student') {
+            userTypeUser.classList.add('active');
+            userTypeAdmin.classList.remove('active');
+            studentFields.style.display = 'block';
+            hostelOwnerFields.style.display = 'none';
         } else {
-            togglePassword.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            userTypeAdmin.classList.add('active');
+            userTypeUser.classList.remove('active');
+            studentFields.style.display = 'none';
+            hostelOwnerFields.style.display = 'block';
         }
-    });
+        clearErrors();
+    }
     
-    // Toggle confirm password visibility
-    toggleConfirmPassword.addEventListener('click', function() {
-        const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        confirmPasswordInput.setAttribute('type', type);
+    function togglePasswordVisibility(type) {
+        const input = type === 'password' ? passwordInput : confirmPasswordInput;
+        const toggleBtn = type === 'password' ? togglePassword : toggleConfirmPassword;
         
-        // Toggle eye icon
-        if (type === 'password') {
-            toggleConfirmPassword.innerHTML = '<i class="fas fa-eye"></i>';
-        } else {
-            toggleConfirmPassword.innerHTML = '<i class="fas fa-eye-slash"></i>';
-        }
-    });
+        const currentType = input.getAttribute('type');
+        const newType = currentType === 'password' ? 'text' : 'password';
+        input.setAttribute('type', newType);
+        
+        const icon = toggleBtn.querySelector('i');
+        icon.className = newType === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+    }
     
-    // Form submission
-    signupForm.addEventListener('submit', function(e) {
+    async function handleSignup(e) {
         e.preventDefault();
         
-        const firstName = document.getElementById('firstName').value;
-        const lastName = document.getElementById('lastName').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const isAdmin = userTypeAdmin.classList.contains('active');
-        const studentId = document.getElementById('studentId').value;
-        const hostelName = document.getElementById('hostelName').value;
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const isHostelAdmin = userTypeAdmin.classList.contains('active');
+        const studentId = document.getElementById('studentId').value.trim();
+        const hostelName = document.getElementById('hostelName').value.trim();
         const agreeTerms = document.getElementById('agreeTerms').checked;
         
-        // Validation
+        // Validate form
         if (!validateForm()) {
             return;
         }
         
-        // Get existing users from localStorage
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Check if email already exists
-        if (users.find(u => u.email === email)) {
-            showError('Email already exists. Please use a different email.');
-            return;
+        try {
+            // Prepare user data
+            const userData = {
+                firstName,
+                lastName,
+                email,
+                phone,
+                password,
+                role: isHostelAdmin ? 'hostel_admin' : 'user',
+                studentId: isHostelAdmin ? null : studentId,
+                hostelName: isHostelAdmin ? hostelName : null,
+                hostelId: null
+            };
+            
+            // Create user through security manager
+            const newUser = securityManager.createUser(userData);
+            
+            // Show success message based on role
+            if (isHostelAdmin) {
+                showSuccess(`
+                    ✅ Account created successfully!<br><br>
+                    <strong>Important:</strong> Your account needs to be activated by the system administrator.<br>
+                    Please contact the administrator to assign your hostel and activate your account.<br><br>
+                    You will receive an email once your account is activated.
+                `);
+            } else {
+                showSuccess(`
+                    ✅ Account created successfully!<br><br>
+                    You can now login to browse and book hostels.<br>
+                    Redirecting to login page...
+                `);
+            }
+            
+            // Disable form
+            const signupBtn = document.querySelector('.btn-primary');
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<i class="fas fa-check"></i> Account Created';
+            
+            // Redirect after delay
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 5000);
+            
+        } catch (error) {
+            showError(error.message);
         }
-        
-        // Create user object
-        const newUser = {
-            id: Date.now().toString(),
-            firstName,
-            lastName,
-            email,
-            phone,
-            password,
-            userType: isAdmin ? 'admin' : 'user',
-            studentId: isAdmin ? null : studentId,
-            hostelName: isAdmin ? hostelName : null,
-            createdAt: new Date().toISOString()
-        };
-        
-        // Add to users array
-        users.push(newUser);
-        
-        // Save to localStorage
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        // Show success message
-        showSuccess('Account created successfully! Redirecting to login...');
-        
-        // Disable form and button
-        const signupBtn = document.querySelector('.btn-primary');
-        signupBtn.disabled = true;
-        signupBtn.innerHTML = '<i class="fas fa-check"></i> Account Created';
-        
-        // Redirect to login after 2 seconds
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
-    });
+    }
     
     function validateForm() {
-        const firstName = document.getElementById('firstName').value;
-        const lastName = document.getElementById('lastName').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const isHostelAdmin = userTypeAdmin.classList.contains('active');
+        const studentId = document.getElementById('studentId').value.trim();
+        const hostelName = document.getElementById('hostelName').value.trim();
         const agreeTerms = document.getElementById('agreeTerms').checked;
         
-        // Clear previous errors
         clearErrors();
         
         let isValid = true;
         
         // Name validation
-        if (!firstName.trim()) {
+        if (!firstName) {
             showFieldError('firstName', 'First name is required');
             isValid = false;
         }
         
-        if (!lastName.trim()) {
+        if (!lastName) {
             showFieldError('lastName', 'Last name is required');
             isValid = false;
         }
         
         // Email validation
-        if (!email.trim()) {
+        if (!email) {
             showFieldError('email', 'Email is required');
             isValid = false;
         } else if (!isValidEmail(email)) {
@@ -148,8 +157,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Phone validation
-        if (!phone.trim()) {
+        if (!phone) {
             showFieldError('phone', 'Phone number is required');
+            isValid = false;
+        } else if (!isValidPhone(phone)) {
+            showFieldError('phone', 'Please enter a valid phone number');
             isValid = false;
         }
         
@@ -160,8 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (password.length < 8) {
             showFieldError('password', 'Password must be at least 8 characters');
             isValid = false;
-        } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-            showFieldError('password', 'Password must contain letters and numbers');
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+            showFieldError('password', 'Password must contain uppercase, lowercase, and numbers');
             isValid = false;
         }
         
@@ -174,18 +186,55 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
         
-        // Terms agreement validation
+        // Role-specific validation
+        if (!isHostelAdmin && !studentId) {
+            showFieldError('studentId', 'Student ID is required');
+            isValid = false;
+        }
+        
+        if (isHostelAdmin && !hostelName) {
+            showFieldError('hostelName', 'Hostel name is required');
+            isValid = false;
+        }
+        
+        // Terms agreement
         if (!agreeTerms) {
-            showError('Please agree to the Terms of Service and Privacy Policy');
+            showError('You must agree to the Terms of Service and Privacy Policy');
             isValid = false;
         }
         
         return isValid;
     }
     
+    function validatePassword() {
+        const password = passwordInput.value;
+        clearFieldError('password');
+        
+        if (password && password.length < 8) {
+            showFieldError('password', 'Password must be at least 8 characters');
+        } else if (password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+            showFieldError('password', 'Password must contain uppercase, lowercase, and numbers');
+        }
+    }
+    
+    function validateConfirmPassword() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        clearFieldError('confirmPassword');
+        
+        if (confirmPassword && password !== confirmPassword) {
+            showFieldError('confirmPassword', 'Passwords do not match');
+        }
+    }
+    
     function isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
+    }
+    
+    function isValidPhone(phone) {
+        const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+        return phoneRegex.test(phone) && phone.length >= 10;
     }
     
     function showFieldError(fieldId, message) {
@@ -194,9 +243,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
+        errorDiv.id = `${fieldId}-error`;
         errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         
         field.parentNode.appendChild(errorDiv);
+    }
+    
+    function clearFieldError(fieldId) {
+        const field = document.getElementById(fieldId);
+        field.classList.remove('error');
+        
+        const errorElement = document.getElementById(`${fieldId}-error`);
+        if (errorElement) {
+            errorElement.remove();
+        }
     }
     
     function showError(message) {
@@ -208,9 +268,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         signupForm.insertBefore(errorDiv, signupForm.querySelector('.btn-primary'));
         
-        // Remove error after 5 seconds
         setTimeout(() => {
-            errorDiv.remove();
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
         }, 5000);
     }
     
@@ -224,38 +285,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function clearErrors() {
-        // Remove error classes from fields
         document.querySelectorAll('.form-control.error').forEach(field => {
             field.classList.remove('error');
         });
         
-        // Remove error messages
         document.querySelectorAll('.error-message').forEach(error => {
             error.remove();
         });
     }
-    
-    // Real-time password validation
-    passwordInput.addEventListener('input', function() {
-        const password = this.value;
-        clearErrors();
-        
-        if (password.length > 0 && password.length < 8) {
-            showFieldError('password', 'Password must be at least 8 characters');
-        } else if (password.length >= 8 && !/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-            showFieldError('password', 'Password must contain letters and numbers');
-        }
-    });
-    
-    // Real-time confirm password validation
-    confirmPasswordInput.addEventListener('input', function() {
-        const password = passwordInput.value;
-        const confirmPassword = this.value;
-        
-        clearErrors();
-        
-        if (confirmPassword && password !== confirmPassword) {
-            showFieldError('confirmPassword', 'Passwords do not match');
-        }
-    });
 });
