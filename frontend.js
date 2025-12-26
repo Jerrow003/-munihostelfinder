@@ -429,6 +429,135 @@ function setupSearch() {
     });
 }
 
+// FAQ accordion: hide answers and toggle on question click/keyboard
+function initFaqAccordion() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    if (!faqItems || faqItems.length === 0) return;
+
+    faqItems.forEach(item => {
+        const question = item.querySelector('h3');
+        const answers = Array.from(item.querySelectorAll('p, .answer'));
+        // Hide answers initially
+        answers.forEach(a => a.style.display = 'none');
+
+        if (!question) return;
+        question.setAttribute('role', 'button');
+        question.setAttribute('tabindex', '0');
+        question.setAttribute('aria-expanded', 'false');
+
+        const toggle = () => {
+            const expanded = question.getAttribute('aria-expanded') === 'true';
+            question.setAttribute('aria-expanded', String(!expanded));
+            answers.forEach(a => a.style.display = expanded ? 'none' : 'block');
+            item.classList.toggle('open', !expanded);
+        };
+
+        question.addEventListener('click', toggle);
+        question.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initFaqAccordion);
+
+// Mobile menu: inject toggle button, populate mobile nav, and handle open/close
+function initMobileMenu() {
+    const headerContainer = document.querySelector('.header-container');
+    const mobileNav = document.querySelector('.mobile-nav');
+    if (!headerContainer || !mobileNav) return;
+
+    // Create menu toggle if not present
+    if (!headerContainer.querySelector('#menuToggle')) {
+        const btn = document.createElement('button');
+        btn.id = 'menuToggle';
+        btn.className = 'menu-toggle';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Open menu');
+        btn.innerHTML = '<i class="fas fa-bars"></i>';
+        // Insert before nav for better layout
+        const nav = headerContainer.querySelector('nav');
+        headerContainer.insertBefore(btn, nav);
+
+        btn.addEventListener('click', () => {
+            mobileNav.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            populateMobileNav();
+        });
+    }
+
+    // Close menu button
+    const closeBtn = mobileNav.querySelector('.close-menu');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    // Close when clicking overlay (mobile nav background)
+    mobileNav.addEventListener('click', (e) => {
+        if (e.target === mobileNav) {
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
+    function populateMobileNav() {
+        const list = mobileNav.querySelector('#mobileNavList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        const anchors = Array.from(document.querySelectorAll('header nav ul li a'));
+        anchors.forEach(a => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = a.getAttribute('href');
+            link.innerHTML = a.innerHTML;
+            link.addEventListener('click', () => {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            li.appendChild(link);
+            list.appendChild(li);
+        });
+
+        // Mobile user menu area
+        const mobileUserMenu = mobileNav.querySelector('#mobileUserMenu');
+        if (mobileUserMenu) {
+            const auth = getCurrentUser();
+            mobileUserMenu.innerHTML = ''; 
+            if (auth) {
+                mobileUserMenu.innerHTML = `
+                    <div class="mobile-user">
+                        <div class="avatar">${auth.firstName.charAt(0)}${auth.lastName.charAt(0)}</div>
+                        <div class="mobile-user-info">
+                            <strong>${auth.firstName} ${auth.lastName}</strong>
+                            <div>${auth.email}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:0.5rem;">
+                        <a class="btn btn-block" href="#" onclick="viewMyBookings();return false;">My Bookings</a>
+                        <a class="btn btn-block" href="#" onclick="viewFavorites();return false;">Favorites</a>
+                        <a class="btn btn-block" href="#" onclick="logout();return false;">Logout</a>
+                    </div>
+                `;
+            } else {
+                mobileUserMenu.innerHTML = `
+                    <div style="display:flex; gap:0.5rem;">
+                        <a class="btn btn-primary" href="index.html">Login</a>
+                        <a class="btn btn-secondary" href="signup.html">Register</a>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initMobileMenu);
 function attachHostelEventListeners() {
     document.querySelectorAll('.view-details-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -493,6 +622,30 @@ function updateUserNavigation() {
         authLink.innerHTML = '<i class="fas fa-user"></i> Login';
         authLink.href = 'index.html';
     }
+}
+
+// Ensure auth link has a single deterministic handler
+function bindAuthLink() {
+    const authLink = document.getElementById('authLink');
+    if (!authLink) return;
+
+    // remove previous handlers
+    authLink.replaceWith(authLink.cloneNode(true));
+    const fresh = document.getElementById('authLink');
+    if (!fresh) return;
+
+    fresh.addEventListener('click', function(e) {
+        const user = getCurrentUser();
+        if (user) {
+            e.preventDefault();
+            showUserMenu();
+        } else {
+            // navigate to login page
+            // allow normal navigation if href present
+            e.preventDefault();
+            window.location.href = 'index.html';
+        }
+    });
 }
 
 function showUserMenu() {

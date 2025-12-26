@@ -114,329 +114,336 @@ function displayHostels() {
                     <div class="hostel-feature">
                         <i class="fas fa-wifi ${hostel.features.wifi ? 'text-success' : 'text-muted'}"></i>
                         <span>WiFi</span>
-                    </div>
-                    <div class="hostel-feature">
-                        <i class="fas fa-tint ${hostel.features.water ? 'text-success' : 'text-muted'}"></i>
-                        <span>Water</span>
-                    </div>
-                    <div class="hostel-feature">
-                        <i class="fas fa-bolt ${hostel.features.electricity ? 'text-success' : 'text-muted'}"></i>
-                        <span>Power</span>
-                    </div>
-                    <div class="hostel-feature">
-                        <i class="fas fa-shield-alt ${hostel.features.security ? 'text-success' : 'text-muted'}"></i>
-                        <span>Security</span>
-                    </div>
-                </div>
-                <div class="hostel-price">UGX ${hostel.price}/month</div>
-                <div class="hostel-actions">
-                    <button class="btn btn-primary view-details-btn" data-id="${hostel.id}">
-                        <i class="fas fa-eye"></i> View Details
-                    </button>
-                    <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}">
-                        <i class="fas fa-map-marked-alt"></i> Map
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(card);
-    });
+                        // Basic security manager providing in-browser authentication and helpers
+                        const securityManager = (function() {
+                            function loadUsers() {
+                                const users = JSON.parse(localStorage.getItem('secureUsers') || 'null');
+                                if (!users) {
+                                    // Create a default super admin for development
+                                    const defaultAdmin = [{
+                                        id: 'sa-1',
+                                        firstName: 'Super',
+                                        lastName: 'Admin',
+                                        email: 'admin@muni.test',
+                                        phone: '+256700000000',
+                                        password: 'Admin@123',
+                                        role: 'super_admin',
+                                        status: 'active',
+                                        createdAt: new Date().toISOString()
+                                    }];
+                                    localStorage.setItem('secureUsers', JSON.stringify(defaultAdmin));
+                                    return defaultAdmin;
+                                }
+                                return users;
+                            }
 
-    // Add event listeners to the new buttons
-    document.querySelectorAll('.view-details-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const hostelId = parseInt(this.getAttribute('data-id'));
-            viewHostelDetails(hostelId);
-        });
-    });
+                            function saveUsers(users) {
+                                localStorage.setItem('secureUsers', JSON.stringify(users));
+                            }
 
-    document.querySelectorAll('.get-directions-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const address = this.getAttribute('data-address');
-            getDirections(address);
-        });
-    });
-}
+                            function getUsers() {
+                                return loadUsers();
+                            }
 
-// Function to view hostel details with registration check
-function viewHostelDetails(id) {
-    const hostel = hostels.find(h => h.id === id);
-    const loggedIn = isUserLoggedIn();
-    
-    if (!hostel) return;
+                            function authenticate(email, password) {
+                                const users = loadUsers();
+                                const user = users.find(u => u.email.toLowerCase() === (email || '').toLowerCase() && u.password === password);
+                                if (!user) return null;
+                                return Object.assign({}, user); // return copy (includes password for session in this simple demo)
+                            }
 
-    const featuresList = Object.entries(hostel.features)
-        .map(([feature, available]) => 
-            `<li>${available ? '✓' : '✗'} ${feature.charAt(0).toUpperCase() + feature.slice(1)}</li>`
-        )
-        .join('');
+                            function createUser(data) {
+                                const users = loadUsers();
+                                if (users.some(u => u.email.toLowerCase() === data.email.toLowerCase())) {
+                                    throw new Error('A user with that email already exists');
+                                }
+                                const id = 'u-' + Date.now();
+                                const newUser = Object.assign({
+                                    id,
+                                    createdAt: new Date().toISOString(),
+                                    status: 'pending'
+                                }, data);
+                                users.push(newUser);
+                                saveUsers(users);
+                                return newUser;
+                            }
 
-    let contactSection = '';
-    
-    if (loggedIn) {
-        // Show contact info if logged in
-        contactSection = `
-            <div class="contact-info">
-                <h4>Contact Information</h4>
-                <p><strong>Address:</strong> ${hostel.address}</p>
-                <p><strong>Phone:</strong> ${hostel.phone}</p>
-                <p><strong>Email:</strong> ${hostel.email}</p>
-            </div>
-            <button class="btn btn-primary" onclick="bookHostel(${hostel.id})">
-                <i class="fas fa-calendar-check"></i> Book Now
-            </button>
-        `;
-    } else {
-        // Show registration prompt if not logged in
-        contactSection = `
-            <div class="login-prompt">
-                <p><strong>Registration Required</strong></p>
-                <p>Register and login to view contact details and make bookings</p>
-                <button class="btn btn-primary" onclick="showRegistrationPrompt()">
-                    <i class="fas fa-user-plus"></i> Register Now
-                </button>
-            </div>
-        `;
-    }
+                            function updateUserRole(userId, newRole, actingUser) {
+                                const users = loadUsers();
+                                if (!actingUser || actingUser.role !== 'super_admin') throw new Error('Only super admins may change roles');
+                                const idx = users.findIndex(u => u.id === userId);
+                                if (idx === -1) throw new Error('User not found');
+                                users[idx].role = newRole;
+                                saveUsers(users);
+                            }
 
-    // Create modal for hostel details
-    const modal = document.createElement('div');
-    modal.className = 'modal hostel-detail-modal';
-    modal.id = 'hostelDetailModal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>${hostel.name}</h3>
-                <button class="close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <img src="${hostel.image}" alt="${hostel.name}" class="hostel-img">
-                <p><strong>Location:</strong> ${hostel.location}</p>
-                <p><strong>Price:</strong> UGX ${hostel.price}/month</p>
-                <p><strong>Capacity:</strong> ${hostel.capacity} students</p>
-                <p><strong>Description:</strong> ${hostel.description}</p>
-                <h4>Features:</h4>
-                <ul>${featuresList}</ul>
-                ${contactSection}
-            </div>
-        </div>
-    `;
+                            function assignHostelToAdmin(userId, hostelId) {
+                                const hostelsList = JSON.parse(localStorage.getItem('hostels') || JSON.stringify(hostels));
+                                const users = loadUsers();
+                                const hostel = hostelsList.find(h => h.id === hostelId);
+                                if (!hostel) throw new Error('Hostel not found');
+                                hostel.ownerId = userId;
+                                localStorage.setItem('hostels', JSON.stringify(hostelsList));
+                                const userIdx = users.findIndex(u => u.id === userId);
+                                if (userIdx !== -1) {
+                                    users[userIdx].hostelId = hostelId;
+                                    users[userIdx].hostelName = hostel.name;
+                                    saveUsers(users);
+                                }
+                            }
 
-    document.body.appendChild(modal);
-    
-    // Show modal
-    modal.style.display = 'flex';
-    
-    // Close button functionality
-    modal.querySelector('.close').addEventListener('click', () => {
-        modal.remove();
-    });
-    
-    // Close when clicking outside
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
-}
+                            function hasPermission(user, permission) {
+                                if (!user) return false;
+                                if (user.role === 'super_admin') return true;
+                                if (user.role === 'hostel_admin') return permission !== 'manage_all_hostels';
+                                return false;
+                            }
 
-// Function to show registration prompt
-function showRegistrationPrompt() {
-    const registrationModal = document.getElementById('registrationModal');
-    registrationModal.style.display = 'flex';
-}
+                            function canAccessHostel(user, hostelId) {
+                                if (!user) return false;
+                                if (user.role === 'super_admin') return true;
+                                if (user.role === 'hostel_admin') return user.hostelId === hostelId;
+                                return false;
+                            }
 
-// Function to book hostel (for logged in users)
-function bookHostel(id) {
-    const hostel = hostels.find(h => h.id === id);
-    if (hostel && isUserLoggedIn()) {
-        alert(`Booking initiated for ${hostel.name}\n\nA booking form would open here for registered users.`);
-    }
-}
+                            function filterHostelsByRole(user) {
+                                const hostelsList = JSON.parse(localStorage.getItem('hostels') || JSON.stringify(hostels));
+                                if (!user) return hostelsList.filter(h => h.status === 'active');
+                                if (user.role === 'super_admin') return hostelsList;
+                                if (user.role === 'hostel_admin') return hostelsList.filter(h => h.ownerId === user.id);
+                                return hostelsList.filter(h => h.status === 'active');
+                            }
 
-// Function to get directions (simulated)
-function getDirections(address) {
-    alert(`Opening Google Maps with directions to:\n\n${address}\n\nThis would open Google Maps in a real application.`);
-}
+                            function filterBookingsByRole(user) {
+                                const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+                                if (!user) return [];
+                                if (user.role === 'super_admin') return bookings;
+                                if (user.role === 'hostel_admin') return bookings.filter(b => {
+                                    const hostelsList = JSON.parse(localStorage.getItem('hostels') || JSON.stringify(hostels));
+                                    const owned = hostelsList.filter(h => h.ownerId === user.id).map(h => h.id);
+                                    return owned.includes(b.hostelId);
+                                });
+                                return bookings.filter(b => b.userId === user.id);
+                            }
 
-// Initialize search functionality
-function setupSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const searchButton = document.getElementById('searchBtn');
-    
-    const performSearch = () => {
-        const searchTerm = searchInput.value.toLowerCase().trim();
-        
-        if (searchTerm === '') {
-            displayHostels();
-            return;
-        }
-        
-        const filteredHostels = hostels.filter(hostel => 
-            hostel.name.toLowerCase().includes(searchTerm) ||
-            hostel.location.toLowerCase().includes(searchTerm) ||
-            hostel.price.includes(searchTerm) ||
-            hostel.description.toLowerCase().includes(searchTerm)
-        );
-        
-        const container = document.getElementById('hostels-container');
-        container.innerHTML = '';
-        
-        if (filteredHostels.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                    <i class="fas fa-search" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
-                    <h3>No hostels found</h3>
-                    <p>Try adjusting your search terms</p>
-                </div>
-            `;
-            return;
-        }
-        
-        filteredHostels.forEach(hostel => {
-            const card = document.createElement('div');
-            card.className = 'hostel-card';
-            
-            card.innerHTML = `
-                <img src="${hostel.image}" alt="${hostel.name}" class="hostel-img">
-                <div class="hostel-info">
-                    <h3>${hostel.name}</h3>
-                    <div class="hostel-location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>${hostel.location}</span>
-                    </div>
-                    <div class="hostel-features">
-                        <div class="hostel-feature">
-                            <i class="fas fa-wifi ${hostel.features.wifi ? 'text-success' : 'text-muted'}"></i>
-                            <span>WiFi</span>
-                        </div>
-                        <div class="hostel-feature">
-                            <i class="fas fa-tint ${hostel.features.water ? 'text-success' : 'text-muted'}"></i>
-                            <span>Water</span>
-                        </div>
-                        <div class="hostel-feature">
-                            <i class="fas fa-bolt ${hostel.features.electricity ? 'text-success' : 'text-muted'}"></i>
-                            <span>Power</span>
-                        </div>
-                        <div class="hostel-feature">
-                            <i class="fas fa-shield-alt ${hostel.features.security ? 'text-success' : 'text-muted'}"></i>
-                            <span>Security</span>
-                        </div>
-                    </div>
-                    <div class="hostel-price">UGX ${hostel.price}/month</div>
-                    <div class="hostel-actions">
-                        <button class="btn btn-primary view-details-btn" data-id="${hostel.id}">
-                            <i class="fas fa-eye"></i> View Details
-                        </button>
-                        <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}">
-                            <i class="fas fa-map-marked-alt"></i> Map
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            container.appendChild(card);
-        });
+                            function logSecurityEvent(eventType, details) {
+                                const logs = JSON.parse(localStorage.getItem('securityLogs') || '[]');
+                                logs.push({ id: 'log-' + Date.now(), eventType, details, timestamp: new Date().toISOString() });
+                                localStorage.setItem('securityLogs', JSON.stringify(logs));
+                            }
 
-        // Re-attach event listeners
-        document.querySelectorAll('.view-details-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const hostelId = parseInt(this.getAttribute('data-id'));
-                viewHostelDetails(hostelId);
-            });
-        });
+                            return {
+                                getUsers,
+                                authenticate,
+                                createUser,
+                                updateUserRole,
+                                assignHostelToAdmin,
+                                hasPermission,
+                                canAccessHostel,
+                                filterHostelsByRole,
+                                filterBookingsByRole,
+                                logSecurityEvent
+                            };
+                        })();
 
-        document.querySelectorAll('.get-directions-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const address = this.getAttribute('data-address');
-                getDirections(address);
-            });
-        });
-    };
-    
-    searchButton.addEventListener('click', performSearch);
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
-    });
-}
+                        // Utility: check if user is logged in
+                        function isUserLoggedIn() {
+                            return sessionStorage.getItem('currentUser') !== null;
+                        }
 
-// Initialize registration modal functionality
-function setupRegistrationModal() {
-    const registrationModal = document.getElementById('registrationModal');
-    const cancelModalBtn = document.getElementById('cancelModalBtn');
-    const registerNowBtn = document.getElementById('registerNowBtn');
-    const closeModalBtn = registrationModal.querySelector('.close');
+                        // Display hostels for pages that use this file (basic implementation)
+                        function displayHostels() {
+                            const container = document.getElementById('hostels-container');
+                            if (!container) return;
+                            container.innerHTML = '';
 
-    // Close modal buttons
-    cancelModalBtn.addEventListener('click', () => {
-        registrationModal.style.display = 'none';
-    });
+                            const loggedIn = isUserLoggedIn();
+                            const authLink = document.getElementById('authLink');
+                            if (authLink) {
+                                if (loggedIn) {
+                                    const user = JSON.parse(sessionStorage.getItem('currentUser'));
+                                    authLink.innerHTML = `<i class="fas fa-user"></i> ${user.firstName}`;
+                                    authLink.href = '#';
+                                } else {
+                                    authLink.innerHTML = '<i class="fas fa-user"></i> Login';
+                                    authLink.href = 'index.html';
+                                }
+                            }
 
-    closeModalBtn.addEventListener('click', () => {
-        registrationModal.style.display = 'none';
-    });
+                            const list = JSON.parse(localStorage.getItem('hostels') || JSON.stringify(hostels));
+                            list.forEach(hostel => {
+                                const card = document.createElement('div');
+                                card.className = 'hostel-card';
+                                card.innerHTML = `
+                                    <img src="${hostel.image}" alt="${hostel.name}" class="hostel-img">
+                                    <div class="hostel-info">
+                                        <h3>${hostel.name}</h3>
+                                        <div class="hostel-location"><i class="fas fa-map-marker-alt"></i> <span>${hostel.location}</span></div>
+                                        <div class="hostel-features">
+                                            <div class="hostel-feature"><i class="fas fa-wifi ${hostel.features.wifi ? 'text-success' : 'text-muted'}"></i><span>WiFi</span></div>
+                                            <div class="hostel-feature"><i class="fas fa-tint ${hostel.features.water ? 'text-success' : 'text-muted'}"></i><span>Water</span></div>
+                                            <div class="hostel-feature"><i class="fas fa-bolt ${hostel.features.electricity ? 'text-success' : 'text-muted'}"></i><span>Power</span></div>
+                                            <div class="hostel-feature"><i class="fas fa-shield-alt ${hostel.features.security ? 'text-success' : 'text-muted'}"></i><span>Security</span></div>
+                                        </div>
+                                        <div class="hostel-price">UGX ${hostel.price}/month</div>
+                                        <div class="hostel-actions">
+                                            <button class="btn btn-primary view-details-btn" data-id="${hostel.id}"><i class="fas fa-eye"></i> View Details</button>
+                                            <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}"><i class="fas fa-map-marked-alt"></i> Map</button>
+                                        </div>
+                                    </div>
+                                `;
+                                container.appendChild(card);
+                            });
 
-    // Register now button
-    registerNowBtn.addEventListener('click', () => {
-        registrationModal.style.display = 'none';
-        window.location.href = 'signup.html';
-    });
+                            // Attach listeners safely
+                            document.querySelectorAll('.view-details-btn').forEach(button => {
+                                button.addEventListener('click', function() {
+                                    const hostelId = parseInt(this.getAttribute('data-id'));
+                                    if (typeof viewHostelDetails === 'function') viewHostelDetails(hostelId);
+                                });
+                            });
 
-    // Close when clicking outside
-    registrationModal.addEventListener('click', (e) => {
-        if (e.target === registrationModal) {
-            registrationModal.style.display = 'none';
-        }
-    });
-}
+                            document.querySelectorAll('.get-directions-btn').forEach(button => {
+                                button.addEventListener('click', function() {
+                                    const address = this.getAttribute('data-address');
+                                    if (typeof getDirections === 'function') getDirections(address);
+                                });
+                            });
+                        }
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    displayHostels();
-    initMap();
-    setupSearch();
-    setupRegistrationModal();
-    
-    // Smooth scrolling for navigation links
-    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            const targetId = this.getAttribute('href');
-            
-            if (targetId !== '#') {
-                e.preventDefault();
-                const targetElement = document.querySelector(targetId);
-                
-                if (targetElement) {
-                    targetElement.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            }
-        });
-    });
-});
+                        // Show registration modal if present
+                        function showRegistrationPrompt() {
+                            const registrationModal = document.getElementById('registrationModal');
+                            if (registrationModal) registrationModal.style.display = 'flex';
+                        }
 
-// Initialize map (simulated)
-function initMap() {
-    const mapElement = document.getElementById('map');
-    mapElement.innerHTML = `
-        <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#e9ecef; color:#6c757d;">
-            <div style="text-align:center;">
-                <i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:1rem;"></i>
-                <p>Interactive map showing hostel locations around Muni University</p>
-                <button class="btn btn-primary" style="margin-top:1rem;" onclick="showAllHostelsOnMap()">
-                    <i class="fas fa-map"></i> View All Hostels on Map
-                </button>
-            </div>
-        </div>
-    `;
-}
+                        // Map and helpers
+                        function getDirections(address) {
+                            alert(`This would open Google Maps for: ${address}`);
+                        }
 
-// Function to show all hostels on map (simulated)
-function showAllHostelsOnMap() {
-    alert("This would display all hostel locations on an interactive Google Map in a real application.\n\nHostels would be shown as markers with popup information.");
-}
+                        function showAllHostelsOnMap() {
+                            alert('This would display all hostels on a map in a production app.');
+                        }
+
+                        function initMap() {
+                            const mapElement = document.getElementById('map');
+                            if (!mapElement) return;
+                            mapElement.innerHTML = `
+                                <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#e9ecef; color:#6c757d;">
+                                    <div style="text-align:center;">
+                                        <i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:1rem;"></i>
+                                        <p>Interactive map showing hostel locations around Muni University</p>
+                                        <button class="btn btn-primary" style="margin-top:1rem;" onclick="showAllHostelsOnMap()"><i class="fas fa-map"></i> View All Hostels on Map</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // Search setup (safe guards)
+                        function setupSearch() {
+                            const searchInput = document.getElementById('searchInput');
+                            const searchButton = document.getElementById('searchBtn');
+                            if (!searchInput || !searchButton) return;
+
+                            const performSearch = () => {
+                                const searchTerm = searchInput.value.toLowerCase().trim();
+                                if (searchTerm === '') { displayHostels(); return; }
+                                const list = JSON.parse(localStorage.getItem('hostels') || JSON.stringify(hostels));
+                                const filtered = list.filter(h => (h.name || '').toLowerCase().includes(searchTerm) || (h.location || '').toLowerCase().includes(searchTerm) || (h.description || '').toLowerCase().includes(searchTerm) || (h.price || '').includes(searchTerm));
+                                const container = document.getElementById('hostels-container');
+                                if (!container) return;
+                                container.innerHTML = '';
+                                if (filtered.length === 0) {
+                                    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><i class="fas fa-search" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i><h3>No hostels found</h3><p>Try adjusting your search terms</p></div>`;
+                                    return;
+                                }
+                                filtered.forEach(hostel => {
+                                    const card = document.createElement('div');
+                                    card.className = 'hostel-card';
+                                    card.innerHTML = `
+                                        <img src="${hostel.image}" alt="${hostel.name}" class="hostel-img">
+                                        <div class="hostel-info">
+                                            <h3>${hostel.name}</h3>
+                                            <div class="hostel-location"><i class="fas fa-map-marker-alt"></i> <span>${hostel.location}</span></div>
+                                            <div class="hostel-price">UGX ${hostel.price}/month</div>
+                                            <div class="hostel-actions">
+                                                <button class="btn btn-primary view-details-btn" data-id="${hostel.id}"><i class="fas fa-eye"></i> View Details</button>
+                                                <button class="btn btn-secondary get-directions-btn" data-address="${hostel.address}"><i class="fas fa-map-marked-alt"></i> Map</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    container.appendChild(card);
+                                });
+                            };
+
+                            searchButton.addEventListener('click', performSearch);
+                            searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') performSearch(); });
+                        }
+
+                        // Registration modal setup (guarded)
+                        function setupRegistrationModal() {
+                            const registrationModal = document.getElementById('registrationModal');
+                            if (!registrationModal) return;
+                            const cancelModalBtn = document.getElementById('cancelModalBtn');
+                            const registerNowBtn = document.getElementById('registerNowBtn');
+                            const closeModalBtn = registrationModal.querySelector('.close');
+                            if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => registrationModal.style.display = 'none');
+                            if (closeModalBtn) closeModalBtn.addEventListener('click', () => registrationModal.style.display = 'none');
+                            if (registerNowBtn) registerNowBtn.addEventListener('click', () => { registrationModal.style.display = 'none'; window.location.href = 'signup.html'; });
+                            registrationModal.addEventListener('click', (e) => { if (e.target === registrationModal) registrationModal.style.display = 'none'; });
+                        }
+
+                        // Theme toggle injection for header
+                        function ensureHeaderThemeToggle() {
+                            const headerContainers = document.querySelectorAll('.header-container, .header');
+                            if (!headerContainers || headerContainers.length === 0) return;
+
+                            headerContainers.forEach(container => {
+                                if (container.querySelector('#themeToggle')) return;
+                                const btn = document.createElement('button');
+                                btn.id = 'themeToggle';
+                                btn.className = 'theme-toggle';
+                                btn.type = 'button';
+                                btn.setAttribute('aria-pressed', 'false');
+                                btn.style.marginLeft = '1rem';
+                                btn.innerHTML = '<i class="fas fa-moon"></i>';
+                                btn.addEventListener('click', () => {
+                                    const isDark = document.body.classList.toggle('dark-mode');
+                                    btn.setAttribute('aria-pressed', String(isDark));
+                                    const icon = btn.querySelector('i');
+                                    if (isDark) { icon.className = 'fas fa-sun'; } else { icon.className = 'fas fa-moon'; }
+                                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                                });
+                                // Append to container's right side if possible
+                                const right = container.querySelector('.header-right') || container.querySelector('nav') || container;
+                                right.appendChild(btn);
+                            });
+
+                            // Apply saved theme
+                            const saved = localStorage.getItem('theme');
+                            if (saved === 'dark') {
+                                document.body.classList.add('dark-mode');
+                                document.querySelectorAll('#themeToggle i').forEach(i => i.className = 'fas fa-sun');
+                            }
+                        }
+
+                        // Initialize the page
+                        document.addEventListener('DOMContentLoaded', function() {
+                            displayHostels();
+                            initMap();
+                            setupSearch();
+                            setupRegistrationModal();
+                            ensureHeaderThemeToggle();
+                            // Smooth scrolling for navigation links
+                            document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+                                anchor.addEventListener('click', function(e) {
+                                    const targetId = this.getAttribute('href');
+                                    if (targetId !== '#') {
+                                        e.preventDefault();
+                                        const targetElement = document.querySelector(targetId);
+                                        if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                });
+                            });
+                        });

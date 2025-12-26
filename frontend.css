@@ -212,31 +212,55 @@ nav a:hover {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../assets/muni.webp');
+    position: relative;
+    background-color: #111; /* fallback */
+    background-image: url('../assets/muni.webp');
     background-size: cover;
-    background-position: center;
+    background-position: center center;
+    background-repeat: no-repeat;
     color: white;
-    padding: 4rem 2rem;
+    padding: 6rem 1rem;
     text-align: center;
-    min-height: 60vh;
+    min-height: 72vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.35) 50%, rgba(10,10,10,0.6) 100%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .hero-content {
-    max-width: 800px;
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
     margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(2,6,23,0.6);
 }
 
 .hero h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+    font-size: 2.75rem;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.5px;
+    line-height: 1.05;
 }
 
 .hero p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+    color: rgba(255,255,255,0.9);
 }
 
 .search-box {
@@ -456,6 +480,24 @@ nav a:hover {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.faq-item h3 {
+    cursor: pointer;
+}
+
+/* Add dropdown arrow indicator */
+.faq-item h3::after {
+    content: '▾';
+    margin-left: auto;
+    font-size: 1.1rem;
+    color: rgba(0,0,0,0.45);
+    transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.faq-item.open h3::after {
+    transform: rotate(180deg);
+    color: var(--primary);
 }
 
 /* Footer */

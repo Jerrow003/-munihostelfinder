@@ -10,8 +10,8 @@ if (!currentUser || currentUser.role !== 'super_admin') {
 // DOM Elements
 const usersContainer = document.getElementById('usersContainer');
 const searchUsersInput = document.getElementById('searchUsers');
-const roleStatsDiv = document.getElementById('roleStats');
-const addUserBtn = document.getElementById('addUserBtn');
+const roleStatsDiv = document.getElementById('userStats') || document.getElementById('roleStats');
+const createUserBtn = document.getElementById('createUserBtn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -220,8 +220,8 @@ function setupEventListeners() {
         });
     }
     
-    if (addUserBtn) {
-        addUserBtn.addEventListener('click', createNewUser);
+    if (createUserBtn) {
+        createUserBtn.addEventListener('click', createNewUser);
     }
 }
 
